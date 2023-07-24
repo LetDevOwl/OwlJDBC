@@ -4,7 +4,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.kh.jdbc.day01.student.model.vo.Student;
+import com.kh.jdbc.day02.student.model.vo.Student;
 
 public class StudentDAO {
 	private final String DRIVER_NAME = "oracle.jdbc.driver.OracleDriver";
