@@ -1,35 +1,50 @@
-package com.kh.jdbc.day03.student.model.dao;
+package com.kh.jdbc.day04.student.model.dao;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.kh.jdbc.day03.student.model.vo.Student;
+import com.kh.jdbc.day04.student.common.JDBCTemplate;
+import com.kh.jdbc.day04.student.model.vo.Student;
 
 public class StudentDAO {
+	/*
+	 * 1. Statement
+	 * - createStatement() 메소드를 통해서 객체 생성
+	 * - execute*()를 실행할 때 쿼리문이 필요함
+	 * - 쿼리문을 별도로 컴파일 하지 않아서 단순 실행일 경우 빠름
+	 * - ex) 전체정보조회
+	 * 
+	 * 2. PreparedStatement
+	 * - Statement를 상속받아서 만들어진 인터페이스
+	 * - prepareStatement() 메소들를 통해서 객체 생성하는데 이때 쿼리문 필요
+	 * - 쿼리문을 미리 컴파일하여 캐싱한 후 재사용하는 구조
+	 * - 쿼리문을 컴파일 할때 위치홀더(?)를 이용하여 값이 들어가는 부분을 표시한 후 쿼리문 실행전에
+	 * 값을 셋팅해주어야함.
+	 * - 컴파일 하는 과정이 있어 느릴 수 있지만 쿼리문을 반복해서 실행할 때는 속도가 빠름
+	 * - 전달값이 있는 쿼리문에 대해서 SqlInjection을 방어할 수 있는 보안기능이 추가됨
+	 * - ex) 아이디로 정보조회, 이름으로 정보조회
+	 * 
+	 */
 	private final String DRIVER_NAME = "oracle.jdbc.driver.OracleDriver";
-	private final String URL = "jdbc:oracle:thin:@127.0.0.1:1521:XE";
+	private final String URL = "jdbc:oracle:thin:@127.0.0.1:1521:xe";
 	private final String USER = "student";
 	private final String PASSWORD = "student";
 
-	public List<Student> selectAll() {
-		String query = "SELECT * FROM STUDENT_TBL";
-		List<Student> sList = new ArrayList<Student>();
-		Connection conn = null;
+	public List<Student> selectAll(Connection conn) {
 		Statement stmt = null;
 		ResultSet rset = null;
+		String query = "SELECT * FROM STUDENT_TBL";
+		List<Student> sList = null;
 		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
 			stmt = conn.createStatement();
 			rset = stmt.executeQuery(query);
-			while (rset.next()) {
+			sList = new ArrayList<Student>();
+			while(rset.next()) {
 				Student student = rsetToStudent(rset);
 				sList.add(student);
 			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
+		}  catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
 			try {
@@ -43,29 +58,18 @@ public class StudentDAO {
 		return sList;
 	}
 
-	public Student selecOneById(String studentId) {
-		// 1. 위치홀더 셋팅
-		// 2. PreparedStatement 객체 생성 whit query
-		// 3. 입력값 셋팅
-		// 4. 쿼리문 실행 및 결과 받기(feat.method())
-		String query = "SELECT * FROM STUDENT_TBL WHERE STUDENT_ID = ?";
+	public Student selectOneById(Connection conn, String studentId) {
 		Student student = null;
-		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rset = null;
+		String query = "SELECT * FROM STUDENT_TBL WHERE STUDENT_ID = ?";
 		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
 			pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, studentId);
 			rset = pstmt.executeQuery();
-//			Statement stmt = conn.createStatement();
-//			ResultSet rset = stmt.executeQuery(query);
 			if (rset.next()) {
 				student = rsetToStudent(rset);
 			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -80,27 +84,20 @@ public class StudentDAO {
 		return student;
 	}
 
-	public List<Student> selectAllByName(String studentName) {
+	public List<Student> selectAllByName(Connection conn, String studentName) {
 		String query = "SELECT * FROM STUDENT_TBL WHERE STUDENT_NAME = ?";
 		List<Student> sList = new ArrayList<Student>();
-		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rset = null;
+		
 		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
 			pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, studentName);
 			rset = pstmt.executeQuery();
-//			Statement stmt = conn.createStatement();
-//			ResultSet rset = stmt.executeQuery(query);
 			while (rset.next()) {
 				Student student = rsetToStudent(rset);
 				sList.add(student);
 			}
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -115,48 +112,12 @@ public class StudentDAO {
 		return sList;
 	}
 
-	public Student selectLoginInfo(Student student) {
-		String query = "SELECT * FROM STUDENT_TBL WHERE STUDENT_ID = ? AND STUDENT_PWD = ?";
-		Student result = null;
-		Connection conn = null;
-		PreparedStatement pstmt = null;
-		ResultSet rset = null;
-		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
-			pstmt = conn.prepareStatement(query);
-			pstmt.setString(1, student.getStudentId());
-			pstmt.setString(2, student.getStudentPwd()); // 시작은 1로 하고 마지막 수는 물음표의 갯수와 같다.(물음표 = 위치홀더)
-			rset = pstmt.executeQuery();
-//			Statement stmt = conn.createStatement();
-//			ResultSet rset = stmt.executeQuery(query);
-			if (rset.next()) {
-				result = rsetToStudent(rset);
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				rset.close();
-				pstmt.close();
-				conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		return result;
-	}
-
-	public int insertStudent(Student student) {
+	public int insertStudent(Connection conn, Student student) {
 		String query = "INSERT INTO STUDENT_TBL VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATE)";
 		int result = -1;
-		Connection conn = null;
 		PreparedStatement pstmt = null;
 		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
+			pstmt = conn.prepareStatement(query);
 			pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, student.getStudentId());
 			pstmt.setString(2, student.getStudentPwd());
@@ -168,10 +129,6 @@ public class StudentDAO {
 			pstmt.setString(8, student.getAddress());
 			pstmt.setString(9, student.getHobby());
 			result = pstmt.executeUpdate();
-//			Statement stmt =conn.createStatement();
-//			result = stmt.executeUpdate(query);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -185,14 +142,11 @@ public class StudentDAO {
 		return result;
 	}
 
-	public int updateStudent(Student student) {
-		String query = "UPDATE STUDENT_TBL SET STUDENT_PWD = ?, EMAIL = ?, PHONE = ?, ADDRESS = ?, HOBBY = ? WHERE STUDENT_ID = ?";
+	public int updateStudent(Connection conn, Student student) {
 		int result = -1;
-		Connection conn = null;
 		PreparedStatement pstmt = null;
+		String query = "UPDATE STUDENT_TBL SET STUDENT_PWD = ?, EMAIL = ?, PHONE = ?, ADDRESS = ?, HOBBY = ? WHERE STUDENT_ID = ?";
 		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
 			pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, student.getStudentPwd());
 			pstmt.setString(2, student.getEmail());
@@ -201,10 +155,6 @@ public class StudentDAO {
 			pstmt.setString(5, student.getHobby());
 			pstmt.setString(6, student.getStudentId());
 			result = pstmt.executeUpdate();
-//			Statement stmt = conn.createStatement();
-//			result = stmt.executeUpdate(query);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -218,21 +168,14 @@ public class StudentDAO {
 		return result;
 	}
 
-	public int deleteStudent(String studentId) {
-		String query = "DELETE FROM STUDENT_TBL WHERE STUDENT_ID = ?";
+	public int deleteStudent(Connection conn, String studentId) {
 		int result = -1;
-		Connection conn = null;
 		PreparedStatement pstmt = null;
+		String query = "DELETE FROM STUDENT_TBL WHERE STUDENT_ID = ?";
 		try {
-			Class.forName(DRIVER_NAME);
-			conn = DriverManager.getConnection(URL, USER, PASSWORD);
 			pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, studentId);
 			result = pstmt.executeUpdate();
-			// Statement stmt = conn.createStatement();
-			// result = stmt.executeUpdate(query);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
@@ -261,4 +204,5 @@ public class StudentDAO {
 		student.setEnrollDate(rset.getDate("ENROLL_DATE"));
 		return student;
 	}
+
 }
