@@ -15,13 +15,15 @@ public class StudentView {
 	}
 
 	public void startProgram() {
-		int result = -1;
+		List<Student> sList = null;
+		String studentId = "";
+		int result = 0;
 		end: while (true) {
 			int choice = printMenu();
 			switch (choice) {
 			case 1:
 				// SELECT * FROM STUDENT_TBL
-				List<Student> sList = controller.selectAll();
+				sList = controller.selectAll();
 				if (!sList.isEmpty()) {
 					printAllStudents(sList);
 				} else {
@@ -30,7 +32,7 @@ public class StudentView {
 				break;
 			case 2:
 				// SELECT * FROM STUDENT_TBL WHERE STUDENT_ID = 'khuser01'
-				String studentId = inputStdId("검색");
+				studentId = inputStdId("검색");
 				Student student = controller.selectOneById(studentId);
 				if(student != null) {
 					printStudent(student);
@@ -89,12 +91,26 @@ public class StudentView {
 		}
 	}
 
-	private void displaySuccess(String message) {
-		System.out.println("[서비스 성공] : " + message);
-	}
-
-	private void displayError(String message) {
-		System.out.println("[서비스 실패] : " + message);
+	private Student modifyStudent(Student student) {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("====== 학생 정보 수정 ======");
+		System.out.print("비밀번호 : ");
+		String studentPw = sc.next();
+		System.out.print("이메일 : ");
+		String email = sc.next();
+		System.out.print("전화번호 : ");
+		String phone = sc.next();
+		System.out.print("주소 : ");
+		sc.nextLine(); // 공백 제거, 엔터 제거
+		String address = sc.nextLine();
+		System.out.print("취미(,로 구분) : ");
+		String hobby = sc.next();
+		student.setStudentPwd(studentPw);
+		student.setEmail(email);
+		student.setPhone(phone);
+		student.setAddress(address);
+		student.setHobby(hobby);
+		return student;
 	}
 
 	private Student inputStudent() {
@@ -129,51 +145,19 @@ public class StudentView {
 		return studentName;
 	}
 
-	private String inputStdId(String category) {
-		Scanner sc = new Scanner(System.in);
-		System.out.print(category + "할 아이디 입력 : ");
-		String studentId = sc.next();
-		return studentId;
-	}
-
-	private Student modifyStudent(Student student) {
-		Scanner sc = new Scanner(System.in);
-		System.out.println("====== 학생 정보 수정 ======");
-		System.out.print("비밀번호 : ");
-		String studentPw = sc.next();
-		System.out.print("이메일 : ");
-		String email = sc.next();
-		System.out.print("전화번호 : ");
-		String phone = sc.next();
-		System.out.print("주소 : ");
-		sc.nextLine(); // 공백 제거, 엔터 제거
-		String address = sc.nextLine();
-		System.out.print("취미(,로 구분) : ");
-		String hobby = sc.next();
-		student.setStudentPwd(studentPw);
-		student.setEmail(email);
-		student.setPhone(phone);
-		student.setAddress(address);
-		student.setHobby(hobby);
-		return student;
-	}
-
-	private void printAllStudents(List<Student> sList) {
-		System.out.println("====== 학생 전체 조회 ======");
-		for (Student student : sList) {
-			System.out.printf("이름 : %s, 나이 : %d, 아이디 : %s, 성별 : %s, 이메일 : %s, 전화번호 : %s, 주소 : %s, 취미 : %s, 가입날짜 : %s\n",
-					student.getStudentName(), student.getAge(), student.getStudentId(), student.getGender(),
-					student.getEmail(), student.getPhone(), student.getAddress(), student.getHobby(),
-					student.getEnrollDate());
-		}
-	}
-
 	private void printStudent(Student student) {
 		System.out.println("====== 학생 아이디로 조회 ======");
 		System.out.printf("이름 : %s, 나이 : %d, 아이디 : %s, 성별 : %s, 이메일 : %s, 전화번호 : %s, 주소 : %s, 취미 : %s, 가입날짜 : %s\n",
 				student.getStudentName(), student.getAge(), student.getStudentId(), student.getGender(),
 				student.getEmail(), student.getPhone(), student.getAddress(), student.getHobby(),
 				student.getEnrollDate());
+	}
+
+	private String inputStdId(String category) {
+		Scanner sc = new Scanner(System.in);
+		System.out.print(category + "할 아이디 입력 : ");
+		String studentId = sc.next();
+		return studentId;
 	}
 
 	private int printMenu() {
@@ -190,5 +174,23 @@ public class StudentView {
 		System.out.print("메뉴 선택 : ");
 		int input = sc.nextInt();
 		return input;
+	}
+
+	private void displaySuccess(String message) {
+		System.out.println("[서비스 성공] : " + message);
+	}
+
+	private void displayError(String message) {
+		System.out.println("[서비스 실패] : " + message);
+	}
+
+	private void printAllStudents(List<Student> sList) {
+		System.out.println("====== 학생 전체 조회 ======");
+		for (Student student : sList) {
+			System.out.printf("이름 : %s, 나이 : %d, 아이디 : %s, 성별 : %s, 이메일 : %s, 전화번호 : %s, 주소 : %s, 취미 : %s, 가입날짜 : %s\n",
+					student.getStudentName(), student.getAge(), student.getStudentId(), student.getGender(),
+					student.getEmail(), student.getPhone(), student.getAddress(), student.getHobby(),
+					student.getEnrollDate());
+		}
 	}
 }
